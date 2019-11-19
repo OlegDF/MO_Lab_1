@@ -4,6 +4,7 @@ def find_minimum_interval(f, x0, eps):
     x_previous = x0
     f_previous = f(x0)
     f_greater = f(x0 + eps / 3)
+    i = 1
     if(f_previous > f_greater):
        x_current = x0 + eps / 3
        f_current = f_greater
@@ -17,15 +18,16 @@ def find_minimum_interval(f, x0, eps):
         else:
             return x0, x0
     while(h < sys.float_info.max / 2):
+        i += 1
         h *= 2
         x_future = x_current + h
         if(f(x_current) > f(x_future)):
             x_previous = x_current
             x_current = x_future
-        elif x_previous < x_future:
-            return x_previous, x_future
+        elif x0 < x_future:
+            return x0, x_future
         else:
-            return x_future, x_previous
+            return x_future, x0
 
 def f1(x):
     return x ** 2

@@ -8,7 +8,7 @@ def g(f, x0, vector, lbd):
     return f([x0[i] + lbd * vector[i] for i in range(len(x0))])
 
 x0 = [5, 5]
-vector = [-1, -1]
+vector = [1, 1]
 
 def g_simplified(lbd):
     return g(f_multi, x0, vector, lbd)

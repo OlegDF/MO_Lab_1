@@ -9,26 +9,64 @@ def gradient(f_multi, x):
     f_calls += 1
     return grad
 
+def normalized_gradient(f_multi, x):
+    grad = gradient(f_multi, x)
+    length = 0
+    for i in range(len(grad)):
+        length += grad[i] ** 2
+    length = math.sqrt(length)
+    if(length > 1):
+        for i in range(len(grad)):
+            grad[i] /= length
+    return grad
+
 def g_simplified(lbd):
     global x_current
-    return g(f_chosen, x_current, gradient(f_chosen, x_current), lbd)
+    return g(f_chosen, x_current, normalized_gradient(f_chosen, x_current), lbd)
+
+def g_canyon(lbd):
+    global x_canyon, vector_canyon
+    return g(f_chosen, x_canyon, vector_canyon, lbd)
 
 def lbd(x):
-    return find_minimum_fibonacci(g_simplified, 0.0001, *find_minimum_interval(g_simplified, 0, 0.0001))
+    return find_minimum_fibonacci(g_simplified, 0.00001, *find_minimum_interval(g_simplified, 0, 0.00001))
+
+def lbd_canyon():
+    return find_minimum_fibonacci(g_canyon, 0.00001, *find_minimum_interval(g_canyon, 0, 0.00001))
 
 def descend(f_multi, eps, x_starting):
-    global x_current, f_calls
+    global x_current, x_canyon, vector_canyon, f_calls
+    x_list = []
+    x_list.append(x_starting.copy())
     f_calls = 0
     iteration = 1
     x_previous = x_starting
     x_current = x_starting.copy()
-    lbd_current = lbd(x_previous)
-    x_current = [x_current[i] - lbd_current * (-gradient(f_multi, x_current)[i]) for i in range(len(x_current))]
-    while(distance(x_previous, x_current) > eps):
+    x_list.append(x_current.copy())
+    lbd_current = lbd(x_current) / 2
+    grad = normalized_gradient(f_multi, x_previous)
+    x_current = [x_previous[i] + lbd_current * grad[i] for i in range(len(x_previous))]
+    slow_steps = 0
+    canyon_steps = 0
+    while(slow_steps <= 4):
         lbd_current = lbd(x_current)
         x_previous = x_current.copy()
-        x_current = [x_previous[i] - lbd_current * (-gradient(f_multi, x_previous)[i]) for i in range(len(x_previous))]
+        grad = normalized_gradient(f_multi, x_previous)
+        x_current = [x_previous[i] + lbd_current * grad[i] for i in range(len(x_previous))]
+        if(distance(x_previous, x_current) <= eps * 10 and canyon_steps >= 3):
+            x_canyon = x_list[len(x_list) - 2]
+            vector_canyon = [x_current[i] - x_canyon[i] for i in range(len(x_canyon))]
+            lbd_current = lbd_canyon()
+            x_current = [x_canyon[i] + vector_canyon[i] * lbd_current for i in range(len(x_canyon))]
+            if(distance(x_previous, x_current) > eps):
+                canyon_steps = 0
+                slow_steps = 0
+        x_list.append(x_current.copy())
         iteration += 1
+        if(distance(x_previous, x_current) <= eps * 10):
+            canyon_steps += 1
+        if(distance(x_previous, x_current) <= eps):
+            slow_steps += 1
     print("Число итераций:", iteration)
     print("Число вызовов функции:", f_calls)
     return x_current
